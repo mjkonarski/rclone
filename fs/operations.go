@@ -371,7 +371,12 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		}
 	}
 
-	Infof(src, actionTaken)
+	if actionTaken == "Copied (replaced existing)" {
+		Logf(src, actionTaken)
+	} else {
+		Infof(src, actionTaken)
+	}
+
 	return err
 }
 
@@ -454,7 +459,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		Stats.Error()
 		Errorf(dst, "Couldn't %s: %v", action, err)
 	} else if !Config.DryRun {
-		Infof(dst, actioned)
+		Logf(dst, actioned)
 	}
 	Stats.DoneChecking(dst.Remote())
 	return err
@@ -742,14 +747,14 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 		}
 	}
 
-	Logf(fdst, "%d files not in %v", len(dstFiles), fsrc)
+	Infof(fdst, "%d files not in %v", len(dstFiles), fsrc)
 	for _, dst := range dstFiles {
 		Stats.Error()
 		Errorf(dst, "File not in %v", fsrc)
 		atomic.AddInt32(&differences, 1)
 	}
 
-	Logf(fsrc, "%d files not in %s", len(srcFiles), fdst)
+	Infof(fsrc, "%d files not in %s", len(srcFiles), fdst)
 	for _, src := range srcFiles {
 		Stats.Error()
 		Errorf(src, "File not in %v", fdst)
@@ -799,9 +804,9 @@ func CheckFn(fdst, fsrc Fs, checkFunction func(a, b Object) (differ bool, noHash
 
 	Infof(fdst, "Waiting for checks to finish")
 	checkerWg.Wait()
-	Logf(fdst, "%d differences found", Stats.GetErrors())
+	Infof(fdst, "%d differences found", Stats.GetErrors())
 	if noHashes > 0 {
-		Logf(fdst, "%d hashes could not be checked", noHashes)
+		Infof(fdst, "%d hashes could not be checked", noHashes)
 	}
 	if differences > 0 {
 		return errors.Errorf("%d differences found", differences)
